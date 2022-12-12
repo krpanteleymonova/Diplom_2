@@ -1,3 +1,6 @@
+import Users.User;
+import Users.UserClient;
+import Users.UserGenerator;
 import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.ValidatableResponse;
@@ -6,13 +9,16 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-
 public class ChangeUserTest {
-
-    private User user;
-    private UserClient userClient;
     String token;
     String tokenAut;
+    int statusCode;
+    boolean status;
+    String responseEmail;
+    String responseName;
+    String message;
+    private User user;
+    private UserClient userClient;
 
     @Before
     public void setUp() {
@@ -29,44 +35,69 @@ public class ChangeUserTest {
     @DisplayName("Успешное изменение имени пользователя")
     public void userNameCanBeChange() {
         sendPostRequestCreateUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         sendPostRequestLoginUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         setNewNameChangeUser();
         patchRequestCheckChangeUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
+        Assert.assertTrue("Статус не соответствует ожидаемому", status);
+        Assert.assertEquals("Email не соответствует ожидаемому", user.getEmail(), responseEmail);
+        Assert.assertEquals("Name не соответствует ожидаемому", user.getName(), responseName);
     }
 
     @Test
     @DisplayName("Успешное изменение пароля пользователя")
     public void userPasswordCanBeChange() {
         sendPostRequestCreateUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         sendPostRequestLoginUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         setNewPasswordChangeUser();
         patchRequestCheckChangeUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
+        Assert.assertTrue("Статус не соответствует ожидаемому", status);
+        Assert.assertEquals("Email не соответствует ожидаемому", user.getEmail(), responseEmail);
+        Assert.assertEquals("Name не соответствует ожидаемому", user.getName(), responseName);
     }
 
     @Test
     @DisplayName("Успешное изменение email пользователя")
     public void userEmailCanBeChange() {
         sendPostRequestCreateUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         sendPostRequestLoginUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         setNewEmailChangeUser();
         patchRequestCheckChangeUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
+        Assert.assertTrue("Статус не соответствует ожидаемому", status);
+        Assert.assertEquals("Email не соответствует ожидаемому", user.getEmail(), responseEmail);
+        Assert.assertEquals("Name не соответствует ожидаемому", user.getName(), responseName);
     }
 
     @Test
     @DisplayName("Успешное изменение имени пользователя невозможно без авторизации")
     public void userNameCanNotBeChange() {
         sendPostRequestCreateUser();
-        sendPostRequestLoginUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         setNewNameChangeUser();
+        sendPatchRequestNoAuthorizationChangeUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 401, statusCode);
+        Assert.assertFalse("Статус не соответствует ожидаемому", status);
+        Assert.assertEquals("Сообщение не соответствует ожидаемому", "You should be authorised", message);
     }
 
     @Test
     @DisplayName("Успешное изменение пароля пользователя  невозможно без авторизации")
     public void userPasswordCanNotBeChange() {
         sendPostRequestCreateUser();
-        sendPostRequestLoginUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         setNewPasswordChangeUser();
         sendPatchRequestNoAuthorizationChangeUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 401, statusCode);
+        Assert.assertFalse("Статус не соответствует ожидаемому", status);
+        Assert.assertEquals("Сообщение не соответствует ожидаемому", "You should be authorised", message);
     }
 
     @Test
@@ -76,8 +107,9 @@ public class ChangeUserTest {
         sendPostRequestLoginUser();
         setNewEmailChangeUser();
         sendPatchRequestNoAuthorizationChangeUser();
+        Assert.assertFalse("Статус не соответствует ожидаемому", status);
+        Assert.assertEquals("Сообщение не соответствует ожидаемому", "You should be authorised", message);
     }
-
 
     @Step("Изменение имени уникального пользователя")
     public void setNewNameChangeUser() {
@@ -88,32 +120,28 @@ public class ChangeUserTest {
     public void patchRequestCheckChangeUser() {
         System.out.println("Name Change:  " + user.getName());
         System.out.println("Email Change: " + user.getEmail());
-        ValidatableResponse responseChange = userClient.ChangeUser(tokenAut, user);
-        int statusChange = responseChange.extract().statusCode();
-        System.out.println("Статус изменения пользователя: " + statusChange);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusChange);
-        boolean okChange = responseChange.extract().path("success");
-        Assert.assertTrue("Статус не соответствует ожидаемому", okChange);
+        ValidatableResponse responseChange = userClient.changeUser(tokenAut, user);
+        statusCode = responseChange.extract().statusCode();
+        System.out.println("Статус изменения пользователя: " + statusCode);
+        status = responseChange.extract().path("success");
+        responseEmail = responseChange.extract().path("user.email");
+        responseName = responseChange.extract().path("user.name");
         System.out.println("Name и Email после изменения" + responseChange.extract().path("user"));
-        Assert.assertEquals("Email не соответствует ожидаемому", user.getEmail(), responseChange.extract().path("user.email"));
-        Assert.assertEquals("Name не соответствует ожидаемому", user.getName(), responseChange.extract().path("user.name"));
     }
 
     @Step("Регистрация уникального пользователя")
     public void sendPostRequestCreateUser() {
         ValidatableResponse responseCreate = userClient.register(user);
-        int statusCreate = responseCreate.extract().statusCode();
-        System.out.println("Статус создания пользователя: " + statusCreate);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCreate);
+        statusCode = responseCreate.extract().statusCode();
+        System.out.println("Статус создания пользователя: " + statusCode);
         token = responseCreate.extract().path("accessToken");
     }
 
     @Step("Авторизация уникального пользователя")
     public void sendPostRequestLoginUser() {
         ValidatableResponse responseLogin = userClient.login(user);
-        int statusCreate = responseLogin.extract().statusCode();
-        System.out.println("Статус авторизации пользователя: " + statusCreate);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCreate);
+        statusCode = responseLogin.extract().statusCode();
+        System.out.println("Статус авторизации пользователя: " + statusCode);
         tokenAut = responseLogin.extract().path("accessToken");
         System.out.println("Токен при авторизации: " + tokenAut);
         System.out.println("Name и Email при авторизации " + responseLogin.extract().path("user"));
@@ -131,14 +159,11 @@ public class ChangeUserTest {
 
     @Step("Проверка изменений уникального пользователя без авторизации")
     public void sendPatchRequestNoAuthorizationChangeUser() {
-        ValidatableResponse responseChange = userClient.ChangeUser("", user);
-        int statusChange = responseChange.extract().statusCode();
-        System.out.println("Статус изменения пользователя: " + statusChange);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 401, statusChange);
-        boolean okChange = responseChange.extract().path("success");
-        Assert.assertFalse("Статус не соответствует ожидаемому", okChange);
-        String messageChange = responseChange.extract().path("message");
-        Assert.assertEquals("Сообщение не соответствует ожидаемому", "You should be authorised", messageChange);
+        ValidatableResponse responseChange = userClient.changeUser("", user);
+        statusCode = responseChange.extract().statusCode();
+        System.out.println("Статус изменения пользователя: " + statusCode);
+        status = responseChange.extract().path("success");
+        message = responseChange.extract().path("message");
     }
 
     @Step("Удаление пользователя из системы")
@@ -146,6 +171,5 @@ public class ChangeUserTest {
         ValidatableResponse responseDelete = userClient.deleteUser(token);
         int statusDelete = responseDelete.extract().statusCode();
         System.out.println("Статус удаления пользователя: " + statusDelete);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 202, statusDelete);
     }
 }

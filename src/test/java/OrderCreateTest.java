@@ -1,3 +1,9 @@
+import Ingredients.Ingredient;
+import Ingredients.IngredientGenerator;
+import Orders.OrderClient;
+import Users.User;
+import Users.UserClient;
+import Users.UserGenerator;
 import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.ValidatableResponse;
@@ -7,16 +13,20 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class OrderCreateTest {
+    String token;
+    int statusCode;
+    boolean status;
+    int orderNumber;
+    String name;
+    String message;
     private User user;
     private UserClient userClient;
     private Ingredient ingredients;
-    String token;
 
     @Before
     public void setUp() {
         userClient = new UserClient();
         user = UserGenerator.getDefaultUser();
-
     }
 
     @After
@@ -29,12 +39,21 @@ public class OrderCreateTest {
     public void orderCanBeCreated() {
         sendPostRequestCreateUser();
         sendPostRequestCreateOrder();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
+        Assert.assertTrue("Статус не соответствует ожидаемому", status);
+        Assert.assertNotNull("Номер не найден", orderNumber);
+        Assert.assertEquals("Имя не соответствует ожидаемому", user.getName(), name);
     }
+
     @Test
     @DisplayName("Успешное создание заказа без авторизации и ингридиентами")
     public void orderCanBeCreatedNoAuthorization() {
         sendPostRequestCreateUser();
         sendPostRequestCreateOrderNoAuthorization();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
+        Assert.assertTrue("Статус не соответствует ожидаемому", status);
+        Assert.assertNotNull("Номер не найден", orderNumber);
+        Assert.assertEquals("Имя не соответствует ожидаемому", null, name);
     }
 
     @Test
@@ -42,6 +61,9 @@ public class OrderCreateTest {
     public void orderCanNotBeCreated() {
         sendPostRequestCreateUser();
         sendPostRequestCreateOrderNoIngredients();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 400, statusCode);
+        Assert.assertFalse("Статус не соответствует ожидаемому", status);
+        Assert.assertEquals("Собщение не соответствует ожидаемому", "Ingredient ids must be provided", message);
     }
 
     @Test
@@ -49,71 +71,59 @@ public class OrderCreateTest {
     public void orderCanNotBeCreatedIncorrectHash() {
         sendPostRequestCreateUser();
         sendPostRequestCreateOrderErrorIngredients();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 400, statusCode);
+        Assert.assertFalse("Статус не соответствует ожидаемому", status);
+        Assert.assertEquals("Собщение не соответствует ожидаемому", "One or more ids provided are incorrect", message);
     }
 
     @Step("Создание заказа")
     public void sendPostRequestCreateOrder() {
-        ingredients= IngredientGenerator.getDefault();
-        ValidatableResponse responseCreate = OrderClient.create(token,ingredients);
-        int statusCreate = responseCreate.extract().statusCode();
-        System.out.println("Статус создания заказа: " + statusCreate);
-        boolean okCreate = responseCreate.extract().path("success");
-        System.out.println("Заказ создан: " + okCreate);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCreate);
-        Assert.assertTrue("Статус не соответствует ожидаемому", okCreate);
-        int OrderNumber = responseCreate.extract().path("order.number");
-        System.out.println("Номер заказа: " + OrderNumber);
-        Assert.assertNotNull("Номер не найден", OrderNumber);
-        String name=responseCreate.extract().path("order.owner.name");
+        ingredients = IngredientGenerator.getDefault();
+        ValidatableResponse responseCreate = OrderClient.create(token, ingredients);
+        statusCode = responseCreate.extract().statusCode();
+        System.out.println("Статус создания заказа: " + statusCode);
+        status = responseCreate.extract().path("success");
+        System.out.println("Заказ создан: " + status);
+        orderNumber = responseCreate.extract().path("order.number");
+        System.out.println("Номер заказа: " + orderNumber);
+        name = responseCreate.extract().path("order.owner.name");
         System.out.println("Name: " + name);
-        Assert.assertEquals("Имя не соответствует ожидаемому",user.getName(),name );
     }
+
     @Step("Создание заказа без авторизации")
     public void sendPostRequestCreateOrderNoAuthorization() {
-        ingredients= IngredientGenerator.getDefault();
-        ValidatableResponse responseCreate = OrderClient.create("",ingredients);
-        int statusCreate = responseCreate.extract().statusCode();
-        System.out.println("Статус создания заказа: " + statusCreate);
-        boolean okCreate = responseCreate.extract().path("success");
-        System.out.println("Заказ создан: " + okCreate);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCreate);
-        Assert.assertTrue("Статус не соответствует ожидаемому", okCreate);
-        int OrderNumber = responseCreate.extract().path("order.number");
-        System.out.println("Номер заказа: " + OrderNumber);
-        Assert.assertNotNull("Номер не найден", OrderNumber);
-        String name=responseCreate.extract().path("order.owner.name");
+        ingredients = IngredientGenerator.getDefault();
+        ValidatableResponse responseCreate = OrderClient.create("", ingredients);
+        statusCode = responseCreate.extract().statusCode();
+        System.out.println("Статус создания заказа: " + statusCode);
+        status = responseCreate.extract().path("success");
+        System.out.println("Заказ создан: " + status);
+        orderNumber = responseCreate.extract().path("order.number");
+        System.out.println("Номер заказа: " + orderNumber);
+        name = responseCreate.extract().path("order.owner.name");
         System.out.println("Name: " + name);
-        Assert.assertEquals("Имя не соответствует ожидаемому",null,name );
     }
-
-
 
     @Step("Создание заказа без ингридиентов")
     public void sendPostRequestCreateOrderNoIngredients() {
-        ingredients= IngredientGenerator.getEmpty();
-        ValidatableResponse responseCreate = OrderClient.create(token,ingredients);
-        int statusCreate = responseCreate.extract().statusCode();
-        System.out.println("Статус создания заказа: " + statusCreate);
-        boolean okCreate = responseCreate.extract().path("success");
-        System.out.println("Заказ создан: " + okCreate);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 400, statusCreate);
-        Assert.assertFalse("Статус не соответствует ожидаемому", okCreate);
-        String messageCreate = responseCreate.extract().path("message");
-        Assert.assertEquals("Собщение не соответствует ожидаемому", "Ingredient ids must be provided", messageCreate);
+        ingredients = IngredientGenerator.getEmpty();
+        ValidatableResponse responseCreate = OrderClient.create(token, ingredients);
+        statusCode = responseCreate.extract().statusCode();
+        System.out.println("Статус создания заказа: " + statusCode);
+        status = responseCreate.extract().path("success");
+        System.out.println("Заказ создан: " + status);
+        message = responseCreate.extract().path("message");
     }
 
     @Step("Создание заказа c некорректными hash")
     public void sendPostRequestCreateOrderErrorIngredients() {
-        ingredients= IngredientGenerator.getErrorHash();
-        ValidatableResponse responseCreate = OrderClient.create(token,ingredients);
-        int statusCreate = responseCreate.extract().statusCode();
-        System.out.println("Статус создания заказа: " + statusCreate);
-        boolean okCreate = responseCreate.extract().path("success");
-        System.out.println("Заказ создан: " + okCreate);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 400, statusCreate);
-        Assert.assertFalse("Статус не соответствует ожидаемому", okCreate);
-        String messageCreate = responseCreate.extract().path("message");
-        Assert.assertEquals("Собщение не соответствует ожидаемому", "One or more ids provided are incorrect", messageCreate);
+        ingredients = IngredientGenerator.getErrorHash();
+        ValidatableResponse responseCreate = OrderClient.create(token, ingredients);
+        statusCode = responseCreate.extract().statusCode();
+        System.out.println("Статус создания заказа: " + statusCode);
+        status = responseCreate.extract().path("success");
+        System.out.println("Заказ создан: " + status);
+        message = responseCreate.extract().path("message");
     }
 
     @Step("Регистрация пользователя")
@@ -126,8 +136,6 @@ public class OrderCreateTest {
         token = responseCreate.extract().path("accessToken");
     }
 
-
-
     @Step("Удаление пользователя из системы")
     public void sendDeleteRequestUser() {
         ValidatableResponse responseDelete = userClient.deleteUser(token);
@@ -135,10 +143,7 @@ public class OrderCreateTest {
         boolean okDelete = responseDelete.extract().path("success");
         String messageDelete = responseDelete.extract().path("message");
         System.out.println("Статус удаления пользователя: " + statusDelete);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 202, statusDelete);
-
     }
-
 }
 
 

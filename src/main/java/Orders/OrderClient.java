@@ -1,17 +1,17 @@
+package Orders;
+
+import Ingredients.Ingredient;
+import Utils.Client;
 import io.restassured.response.ValidatableResponse;
 
 import static io.restassured.RestAssured.given;
 
-
 public class OrderClient extends Client {
-
     private static final String PATH_ORDER = "api/orders/";
 
-
-
-    public static ValidatableResponse create(String tokenAut,Ingredient ingredients) {
+    public static ValidatableResponse create(String tokenAut, Ingredient ingredients) {
         return given()
-                .spec(getSpec())
+                .spec(Client.getSpec())
                 .header(
                         "Authorization"
                         ,
@@ -22,9 +22,9 @@ public class OrderClient extends Client {
                 .then();
     }
 
-    public static ValidatableResponse getOrders (String token) {
+    public static ValidatableResponse getOrders(String token) {
         return given()
-                .spec(getSpec())
+                .spec(Client.getSpec())
                 .header(
                         "Authorization"
                         ,

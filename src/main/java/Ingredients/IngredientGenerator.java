@@ -1,10 +1,8 @@
+package Ingredients;
+
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class IngredientGenerator {
-
-
     public static Ingredient getDefault() {
         ArrayList<String> ingredients = new ArrayList<>();
         ingredients.add("61c0c5a71d1f82001bdaaa70");
@@ -12,6 +10,7 @@ public class IngredientGenerator {
         System.out.println(ingredients);
         return new Ingredient(ingredients);
     }
+
     public static Ingredient getEmpty() {
         ArrayList<String> ingredients = new ArrayList<>();
         System.out.println(ingredients);
@@ -24,5 +23,4 @@ public class IngredientGenerator {
         System.out.println(ingredients);
         return new Ingredient(ingredients);
     }
-
 }

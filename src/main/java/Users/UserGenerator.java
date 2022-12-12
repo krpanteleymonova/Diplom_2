@@ -1,17 +1,18 @@
+package Users;
+
 import com.github.javafaker.Faker;
 
 import java.sql.Timestamp;
 
 public class UserGenerator {
-
+    public static String newName = "pokemonchik";
+    public static String newEmail = "pokemonchik@ya.ru";
+    public static String newPassword = "pokemonchik123456";
     static Timestamp timestamp = new Timestamp(System.currentTimeMillis());
     static Faker faker = new Faker();
     private static final String email = faker.internet().emailAddress();
     private static final String name = faker.name().firstName();
     private static final String password = name + timestamp.getTime();
-    static String newName = "pokemon";
-    static String newEmail = "pokemon@ya.ru";
-    static String newPassword = "pokemon123456";
 
     public static User getDefaultUser() {
         System.out.println("Создаем пользователя: " + email + ", " + password + ", " + name);

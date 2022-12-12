@@ -1,19 +1,19 @@
+package Users;
+
+import Utils.Client;
 import io.restassured.response.ValidatableResponse;
 
 import static io.restassured.RestAssured.given;
 
-
 public class UserClient extends Client {
-
     private static final String PATH_REGISTER = "api/auth/register/";
     private static final String PATH_LOGIN = "api/auth/login/";
     private static final String PATH_LOGOUT = "/api/auth/logout/";
     private static final String PATH_USER = "/api/auth/user/";
 
-
     public ValidatableResponse register(User user) {
         return given()
-                .spec(getSpec())
+                .spec(Client.getSpec())
                 .body(user)
                 .when()
                 .post(PATH_REGISTER)
@@ -22,7 +22,7 @@ public class UserClient extends Client {
 
     public ValidatableResponse login(User user) {
         return given()
-                .spec(getSpec())
+                .spec(Client.getSpec())
                 .body(user)
                 .when()
                 .post(PATH_LOGIN)
@@ -31,7 +31,7 @@ public class UserClient extends Client {
 
     public ValidatableResponse deleteUser(String token) {
         return given()
-                .spec(getSpec())
+                .spec(Client.getSpec())
                 .header(
                         "Authorization"
                         ,
@@ -41,9 +41,9 @@ public class UserClient extends Client {
                 .then();
     }
 
-    public ValidatableResponse ChangeUser(String tokenAut, User user) {
+    public ValidatableResponse changeUser(String tokenAut, User user) {
         return given()
-                .spec(getSpec())
+                .spec(Client.getSpec())
                 .header(
                         "Authorization"
                         ,

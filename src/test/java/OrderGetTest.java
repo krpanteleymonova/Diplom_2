@@ -1,3 +1,9 @@
+import Ingredients.Ingredient;
+import Ingredients.IngredientGenerator;
+import Orders.OrderClient;
+import Users.User;
+import Users.UserClient;
+import Users.UserGenerator;
 import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.ValidatableResponse;
@@ -7,17 +13,20 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class OrderGetTest {
+    String token;
+    int orderNumber;
+    int statusCode;
+    boolean status;
+    int orders;
+    String message;
     private User user;
     private UserClient userClient;
     private Ingredient ingredients;
-    String token;
-    int orderNumber;
 
     @Before
     public void setUp() {
         userClient = new UserClient();
         user = UserGenerator.getDefaultUser();
-
     }
 
     @After
@@ -31,6 +40,8 @@ public class OrderGetTest {
         sendPostRequestCreateUser();
         sendPostRequestCreateOrder();
         sendGetOrderRequest();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
+        Assert.assertEquals("Статус код не соответствует ожидаемому", orderNumber, orders);
     }
 
     @Test
@@ -38,38 +49,35 @@ public class OrderGetTest {
     public void orderCanBeCreatedNoAuthorization() {
         sendPostRequestCreateUser();
         sendGetOrderRequestNoAuthorization();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 401, statusCode);
+        Assert.assertFalse("Статус не соответствует ожидаемому", status);
+        Assert.assertEquals("Собщение не соответствует ожидаемому", "You should be authorised", message);
     }
 
     @Step("Получение списка заказов")
     public void sendGetOrderRequest() {
         ValidatableResponse responseCreate = OrderClient.getOrders(token);
-        int statusCreate = responseCreate.extract().statusCode();
-        System.out.println("Статус олучения списка заказов: " + statusCreate);
-        boolean okCreate = responseCreate.extract().path("success");
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCreate);
-        int orders = responseCreate.extract().path("orders[0].number");
-        Assert.assertEquals("Статус код не соответствует ожидаемому", orderNumber, orders);
+        statusCode = responseCreate.extract().statusCode();
+        System.out.println("Статус олучения списка заказов: " + statusCode);
+        orders = responseCreate.extract().path("orders[0].number");
     }
 
     @Step("Получение списка заказов без авторизации")
     public void sendGetOrderRequestNoAuthorization() {
         ValidatableResponse responseCreate = OrderClient.getOrders("");
-        int statusCreate = responseCreate.extract().statusCode();
-        System.out.println("Статус олучения списка заказов: " + statusCreate);
-        boolean okCreate = responseCreate.extract().path("success");
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 401, statusCreate);
-        Assert.assertFalse("Статус не соответствует ожидаемому", okCreate);
-        String messageCreate = responseCreate.extract().path("message");
-        Assert.assertEquals("Собщение не соответствует ожидаемому", "You should be authorised", messageCreate);
+        statusCode = responseCreate.extract().statusCode();
+        System.out.println("Статус олучения списка заказов: " + statusCode);
+        status = responseCreate.extract().path("success");
+        message = responseCreate.extract().path("message");
     }
 
     @Step("Создание заказа")
     public void sendPostRequestCreateOrder() {
         ingredients = IngredientGenerator.getDefault();
         ValidatableResponse responseCreate = OrderClient.create(token, ingredients);
-        int statusCreate = responseCreate.extract().statusCode();
-        System.out.println("Статус создания заказа: " + statusCreate);
-        boolean okCreate = responseCreate.extract().path("success");
+        statusCode = responseCreate.extract().statusCode();
+        System.out.println("Статус создания заказа: " + statusCode);
+        status = responseCreate.extract().path("success");
         orderNumber = responseCreate.extract().path("order.number");
         System.out.println("Номер заказа: " + orderNumber);
         String name = responseCreate.extract().path("order.owner.name");
@@ -83,14 +91,12 @@ public class OrderGetTest {
         token = responseCreate.extract().path("accessToken");
     }
 
-
     @Step("Удаление пользователя из системы")
     public void sendDeleteRequestUser() {
         ValidatableResponse responseDelete = userClient.deleteUser(token);
         int statusDelete = responseDelete.extract().statusCode();
         System.out.println("Статус удаления пользователя: " + statusDelete);
     }
-
 }
 
 

@@ -1,3 +1,6 @@
+import Users.User;
+import Users.UserClient;
+import Users.UserGenerator;
 import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.ValidatableResponse;
@@ -8,9 +11,11 @@ import org.junit.Test;
 
 public class LoginUserTest {
 
+    String token;
+    int statusCode;
+    boolean status;
     private User user;
     private UserClient userClient;
-    String token;
 
     @Before
     public void setUp() {
@@ -28,6 +33,8 @@ public class LoginUserTest {
     public void userCanBeLogin() {
         sendPostRequestCreateUser();
         sendPostRequestLoginUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
+        Assert.assertTrue("Статус не соответствует ожидаемому", status);
     }
 
     @Test
@@ -35,6 +42,8 @@ public class LoginUserTest {
     public void userCanNotBeLoginIncorrectPassword() {
         sendPostRequestCreateUser();
         sendPostRequestLoginIncorrectPasswordUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 401, statusCode);
+        Assert.assertFalse("Статус не соответствует ожидаемому", status);
     }
 
     @Test
@@ -42,6 +51,8 @@ public class LoginUserTest {
     public void userCanNotBeLoginIncorrectEmail() {
         sendPostRequestCreateUser();
         sendPostRequestLoginIncorrectEmailUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 401, statusCode);
+        Assert.assertFalse("Статус не соответствует ожидаемому", status);
     }
 
     @Step("Регистрация уникального пользователя")
@@ -57,44 +68,33 @@ public class LoginUserTest {
     @Step("Авторизация уникального пользователя")
     public void sendPostRequestLoginUser() {
         ValidatableResponse responseLogin = userClient.login(user);
-        int statusCreate = responseLogin.extract().statusCode();
-        boolean okLogin = responseLogin.extract().path("success");
-        System.out.println("Статус создания пользователя: " + statusCreate);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCreate);
-        Assert.assertTrue("Статус не соответствует ожидаемому", okLogin);
+        statusCode = responseLogin.extract().statusCode();
+        status = responseLogin.extract().path("success");
+        System.out.println("Статус создания пользователя: " + statusCode);
     }
 
     @Step("Авторизация пользователя с некорректным паролем")
     public void sendPostRequestLoginIncorrectPasswordUser() {
         user.setPassword("123456");
         ValidatableResponse responseLogin = userClient.login(user);
-        int statusCreate = responseLogin.extract().statusCode();
-        boolean okLogin = responseLogin.extract().path("success");
-        System.out.println("Статус создания пользователя: " + statusCreate);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 401, statusCreate);
-        Assert.assertFalse("Статус не соответствует ожидаемому", okLogin);
+        statusCode = responseLogin.extract().statusCode();
+        status = responseLogin.extract().path("success");
+        System.out.println("Статус создания пользователя: " + statusCode);
     }
 
     @Step("Авторизация пользователя с некорректным паролем")
     public void sendPostRequestLoginIncorrectEmailUser() {
         user.setEmail("IncorrectEmailUser@yandex.ru");
         ValidatableResponse responseLogin = userClient.login(user);
-        int statusCreate = responseLogin.extract().statusCode();
-        boolean okLogin = responseLogin.extract().path("success");
-        System.out.println("Статус создания пользователя: " + statusCreate);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 401, statusCreate);
-        Assert.assertFalse("Статус не соответствует ожидаемому", okLogin);
+        statusCode = responseLogin.extract().statusCode();
+        status = responseLogin.extract().path("success");
+        System.out.println("Статус создания пользователя: " + statusCode);
     }
 
     @Step("Удаление пользователя из системы")
     public void sendDeleteRequestUser() {
         ValidatableResponse responseDelete = userClient.deleteUser(token);
         int statusDelete = responseDelete.extract().statusCode();
-        boolean okDelete = responseDelete.extract().path("success");
-        String messageDelete = responseDelete.extract().path("message");
         System.out.println("Статус удаления пользователя: " + statusDelete);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 202, statusDelete);
-        Assert.assertTrue("Статус не соответствует ожидаемому", okDelete);
-        Assert.assertEquals("Собщение не соответствует ожидаемому", "User successfully removed", messageDelete);
     }
 }

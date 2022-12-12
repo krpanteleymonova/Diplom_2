@@ -1,3 +1,6 @@
+import Users.User;
+import Users.UserClient;
+import Users.UserGenerator;
 import io.qameta.allure.Step;
 import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.ValidatableResponse;
@@ -8,9 +11,12 @@ import org.junit.Test;
 
 public class CreateUserTest {
 
+    String token;
+    int statusCode;
+    boolean status;
+    String message;
     private User user;
     private UserClient userClient;
-    String token;
 
     @Before
     public void setUp() {
@@ -27,6 +33,8 @@ public class CreateUserTest {
     @DisplayName("Успешное создание учетной записи c заполнением всех параметров")
     public void userCanBeCreated() {
         sendPostRequestCreateUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
+        Assert.assertTrue("Статус не соответствует ожидаемому", status);
     }
 
     @Test
@@ -34,17 +42,18 @@ public class CreateUserTest {
     public void userAlreadyExistCanNotBeCreated() {
         sendPostRequestCreateUser();
         sendSecondPostRequestCreateUser();
+        Assert.assertEquals("Статус код не соответствует ожидаемому", 403, statusCode);
+        Assert.assertFalse("Статус не соответствует ожидаемому", status);
+        Assert.assertEquals("Собщение не соответствует ожидаемому", "User already exists", message);
     }
 
     @Step("Регистрация уникального пользователя")
     public void sendPostRequestCreateUser() {
         ValidatableResponse responseCreate = userClient.register(user);
-        int statusCreate = responseCreate.extract().statusCode();
-        System.out.println("Статус создания пользователя: " + statusCreate);
-        boolean okCreate = responseCreate.extract().path("success");
-        System.out.println("Пользователь создан: " + okCreate);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCreate);
-        Assert.assertTrue("Статус не соответствует ожидаемому", okCreate);
+        statusCode = responseCreate.extract().statusCode();
+        System.out.println("Статус создания пользователя: " + statusCode);
+        status = responseCreate.extract().path("success");
+        System.out.println("Пользователь создан: " + status);
         token = responseCreate.extract().path("accessToken");
         System.out.println("Токен: " + token);
     }
@@ -52,25 +61,17 @@ public class CreateUserTest {
     @Step("Регистрация существующего пользователя")
     public void sendSecondPostRequestCreateUser() {
         ValidatableResponse responseCreate = userClient.register(user);
-        int statusCreate = responseCreate.extract().statusCode();
-        System.out.println("Статус создания пользователя: " + statusCreate);
-        boolean okCreate = responseCreate.extract().path("success");
-        System.out.println("Пользователь создан: " + okCreate);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 403, statusCreate);
-        Assert.assertFalse("Статус не соответствует ожидаемому", okCreate);
-        String messageCreate = responseCreate.extract().path("message");
-        Assert.assertEquals("Собщение не соответствует ожидаемому", "User already exists", messageCreate);
+        statusCode = responseCreate.extract().statusCode();
+        System.out.println("Статус создания пользователя: " + statusCode);
+        status = responseCreate.extract().path("success");
+        System.out.println("Пользователь создан: " + status);
+        message = responseCreate.extract().path("message");
     }
 
     @Step("Удаление пользователя из системы")
     public void sendDeleteRequestUser() {
         ValidatableResponse responseDelete = userClient.deleteUser(token);
         int statusDelete = responseDelete.extract().statusCode();
-        boolean okDelete = responseDelete.extract().path("success");
-        String messageDelete = responseDelete.extract().path("message");
         System.out.println("Статус удаления пользователя: " + statusDelete);
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 202, statusDelete);
-        Assert.assertTrue("Статус не соответствует ожидаемому", okDelete);
-        Assert.assertEquals("Собщение не соответствует ожидаемому", "User successfully removed", messageDelete);
     }
 }
