@@ -35,9 +35,7 @@ public class ChangeUserTest {
     @DisplayName("Успешное изменение имени пользователя")
     public void userNameCanBeChange() {
         sendPostRequestCreateUser();
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         sendPostRequestLoginUser();
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         setNewNameChangeUser();
         patchRequestCheckChangeUser();
         Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
@@ -50,9 +48,7 @@ public class ChangeUserTest {
     @DisplayName("Успешное изменение пароля пользователя")
     public void userPasswordCanBeChange() {
         sendPostRequestCreateUser();
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         sendPostRequestLoginUser();
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         setNewPasswordChangeUser();
         patchRequestCheckChangeUser();
         Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
@@ -65,9 +61,7 @@ public class ChangeUserTest {
     @DisplayName("Успешное изменение email пользователя")
     public void userEmailCanBeChange() {
         sendPostRequestCreateUser();
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         sendPostRequestLoginUser();
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         setNewEmailChangeUser();
         patchRequestCheckChangeUser();
         Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
@@ -80,7 +74,6 @@ public class ChangeUserTest {
     @DisplayName("Успешное изменение имени пользователя невозможно без авторизации")
     public void userNameCanNotBeChange() {
         sendPostRequestCreateUser();
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         setNewNameChangeUser();
         sendPatchRequestNoAuthorizationChangeUser();
         Assert.assertEquals("Статус код не соответствует ожидаемому", 401, statusCode);
@@ -92,7 +85,6 @@ public class ChangeUserTest {
     @DisplayName("Успешное изменение пароля пользователя  невозможно без авторизации")
     public void userPasswordCanNotBeChange() {
         sendPostRequestCreateUser();
-        Assert.assertEquals("Статус код не соответствует ожидаемому", 200, statusCode);
         setNewPasswordChangeUser();
         sendPatchRequestNoAuthorizationChangeUser();
         Assert.assertEquals("Статус код не соответствует ожидаемому", 401, statusCode);
